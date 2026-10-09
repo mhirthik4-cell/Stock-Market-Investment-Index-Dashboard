@@ -1,0 +1,354 @@
+# ==========================================================
+# STOCK MARKET INVESTMENT + NIFTY 50 + SENSEX DASHBOARD
+# One Candidate
+# ==========================================================
+
+# Install libraries needed for market data and charts
+!pip -q install yfinance matplotlib
+
+from datetime import datetime
+import yfinance as yf
+import matplotlib.pyplot as plt
+
+
+# ==========================================================
+# PART 1: CANDIDATE STOCK BUY / SELL DETAILS
+# ==========================================================
+
+print("========== STOCK MARKET INVESTMENT SYSTEM ==========\n")
+
+candidate_name = input("Enter candidate name: ")
+
+# Automatic date and time
+date_and_time = datetime.now().strftime("%d-%m-%Y %I:%M %p")
+
+print("\nAutomatic Date and Time:", date_and_time)
+
+# ---------------- BUY DETAILS ---------------- #
+
+buy_share_name = input("\nEnter name of share bought (Example: TCS): ")
+shares_bought = int(input("How many shares did the candidate buy? "))
+buy_price = float(input("Enter buying price for one share: Rs. "))
+brokerage_percentage = float(input("Enter brokerage percentage: "))
+
+# ---------------- SELL DETAILS ---------------- #
+
+sell_share_name = input("\nEnter name of share sold (Example: TCS): ")
+shares_sold = int(input("How many shares did the candidate sell? "))
+
+# Validate sold shares only when the bought and sold share names are the same
+if buy_share_name.strip().lower() == sell_share_name.strip().lower():
+
+    while shares_sold > shares_bought:
+        print("ERROR: Sold shares cannot be greater than bought shares.")
+        shares_sold = int(input("Enter sold shares again: "))
+
+sell_price = float(input("Enter selling price for one share: Rs. "))
+
+
+# ==========================================================
+# PART 2: BROKERAGE, BUY, SELL, AND PROFIT/LOSS CALCULATIONS
+# ==========================================================
+
+# Buy calculation
+buy_value = shares_bought * buy_price
+buy_brokerage = buy_value * brokerage_percentage / 100
+total_buy_cost = buy_value + buy_brokerage
+
+# Sell calculation
+sell_value = shares_sold * sell_price
+sell_brokerage = sell_value * brokerage_percentage / 100
+net_sell_amount = sell_value - sell_brokerage
+
+# Brokerage paid for both buy and sell
+total_brokerage = buy_brokerage + sell_brokerage
+
+# If share bought and share sold are the same, calculate profit or loss
+if buy_share_name.strip().lower() == sell_share_name.strip().lower():
+
+    remaining_shares = shares_bought - shares_sold
+
+    # Current value is estimated using sell price
+    remaining_share_value = remaining_shares * sell_price
+
+    # Cost of only the shares that were sold
+    cost_of_sold_shares = shares_sold * buy_price
+
+    # Brokerage applicable to sold shares at purchase
+    buy_brokerage_for_sold_shares = (
+        cost_of_sold_shares * brokerage_percentage / 100
+    )
+
+    total_cost_of_sold_shares = (
+        cost_of_sold_shares + buy_brokerage_for_sold_shares
+    )
+
+    # Net profit or loss after buy and sell brokerage
+    net_profit_loss = net_sell_amount - total_cost_of_sold_shares
+
+else:
+    # Different share names: profit/loss cannot be compared
+    remaining_shares = shares_bought
+    remaining_share_value = remaining_shares * buy_price
+    net_profit_loss = None
+
+
+# ==========================================================
+# PART 3: STOCK MARKET FINAL SUMMARY
+# ==========================================================
+
+print("\n")
+print("+" + "-" * 70 + "+")
+print("|                 STOCK MARKET FINAL SUMMARY                 |")
+print("+" + "-" * 70 + "+")
+
+print(f"| Candidate Name          : {candidate_name:<41} |")
+print(f"| Date and Time           : {date_and_time:<41} |")
+
+print("+" + "-" * 70 + "+")
+
+print(f"| Share Bought Name       : {buy_share_name:<41} |")
+print(f"| Shares Bought           : {shares_bought:<41} |")
+print(f"| Buy Price Per Share     : Rs. {buy_price:<36.2f} |")
+print(f"| Total Buy Value         : Rs. {buy_value:<36.2f} |")
+print(f"| Buy Brokerage           : Rs. {buy_brokerage:<36.2f} |")
+
+print("+" + "-" * 70 + "+")
+
+print(f"| Share Sold Name         : {sell_share_name:<41} |")
+print(f"| Shares Sold             : {shares_sold:<41} |")
+print(f"| Sell Price Per Share    : Rs. {sell_price:<36.2f} |")
+print(f"| Total Sell Value        : Rs. {sell_value:<36.2f} |")
+print(f"| Sell Brokerage          : Rs. {sell_brokerage:<36.2f} |")
+print(f"| Brokerage Percentage    : {brokerage_percentage:<38.2f}% |")
+
+print("+" + "-" * 70 + "+")
+
+print(f"| Total Brokerage         : Rs. {total_brokerage:<36.2f} |")
+print(f"| Remaining Shares        : {remaining_shares:<41} |")
+print(f"| Remaining Share Value   : Rs. {remaining_share_value:<36.2f} |")
+
+if net_profit_loss is None:
+    print("| Profit / Loss           : Not calculated for different shares   |")
+
+elif net_profit_loss > 0:
+    print(f"| Net Profit              : Rs. {net_profit_loss:<36.2f} |")
+
+elif net_profit_loss < 0:
+    print(f"| Net Loss                : Rs. {abs(net_profit_loss):<36.2f} |")
+
+else:
+    print(f"| Net Profit / Loss       : Rs. {net_profit_loss:<36.2f} |")
+
+print("+" + "-" * 70 + "+")
+
+
+# ==========================================================
+# PART 4: NIFTY 50 + SENSEX MARKET DATA AND LINE CHARTS
+# ==========================================================
+
+print("\n========== INDIAN MAIN MARKET CHART ==========\n")
+
+period = input(
+    "Enter market chart period (1mo, 3mo, 6mo, 1y, 2y) or press Enter for 6mo: "
+).strip().lower()
+
+if period == "":
+    period = "6mo"
+
+# Yahoo Finance symbols for the two main Indian market indices
+nifty_symbol = "^NSEI"
+sensex_symbol = "^BSESN"
+
+print("\nGetting NIFTY 50 and SENSEX market data...")
+
+# Download NIFTY 50 historical data
+nifty_data = yf.download(
+    nifty_symbol,
+    period=period,
+    progress=False,
+    auto_adjust=True
+)
+
+# Download SENSEX historical data
+sensex_data = yf.download(
+    sensex_symbol,
+    period=period,
+    progress=False,
+    auto_adjust=True
+)
+
+# Check whether market data was received
+if nifty_data.empty or sensex_data.empty:
+
+    print("\nUnable to get NIFTY 50 or SENSEX market data.")
+    print("Check your internet connection and run the code again.")
+
+else:
+    # NIFTY values
+    nifty_first = float(nifty_data["Close"].iloc[0])
+    nifty_latest = float(nifty_data["Close"].iloc[-1])
+    nifty_change = nifty_latest - nifty_first
+    nifty_percent = (nifty_change / nifty_first) * 100
+
+    # SENSEX values
+    sensex_first = float(sensex_data["Close"].iloc[0])
+    sensex_latest = float(sensex_data["Close"].iloc[-1])
+    sensex_change = sensex_latest - sensex_first
+    sensex_percent = (sensex_change / sensex_first) * 100
+
+    # ---------------- MARKET SUMMARY ---------------- #
+
+    print("\n")
+    print("+" + "-" * 70 + "+")
+    print("|                 INDIAN MAIN MARKET SUMMARY                |")
+    print("+" + "-" * 70 + "+")
+
+    print(f"| Selected Period        : {period:<41} |")
+    print(f"| NIFTY 50 First Value   : {nifty_first:<41.2f} |")
+    print(f"| NIFTY 50 Latest Value  : {nifty_latest:<41.2f} |")
+    print(f"| NIFTY 50 Change        : {nifty_change:<41.2f} |")
+    print(f"| NIFTY 50 Change %      : {nifty_percent:<40.2f}% |")
+
+    print("+" + "-" * 70 + "+")
+
+    print(f"| SENSEX First Value     : {sensex_first:<41.2f} |")
+    print(f"| SENSEX Latest Value    : {sensex_latest:<41.2f} |")
+    print(f"| SENSEX Change          : {sensex_change:<41.2f} |")
+    print(f"| SENSEX Change %        : {sensex_percent:<40.2f}% |")
+
+    print("+" + "-" * 70 + "+")
+
+    # ---------------- NIFTY 50 CHART ---------------- #
+
+    plt.figure(figsize=(14, 6))
+
+    plt.plot(
+        nifty_data.index,
+        nifty_data["Close"],
+        color="blue",
+        linewidth=2,
+        label="NIFTY 50 Closing Value"
+    )
+
+    plt.scatter(
+        nifty_data.index[0],
+        nifty_first,
+        color="green",
+        s=80,
+        label="First Value"
+    )
+
+    plt.scatter(
+        nifty_data.index[-1],
+        nifty_latest,
+        color="red",
+        s=80,
+        label="Latest Value"
+    )
+
+    plt.title(
+        f"NIFTY 50 Historical Market Line Chart ({period})",
+        fontsize=15,
+        fontweight="bold"
+    )
+
+    plt.xlabel("Date")
+    plt.ylabel("NIFTY 50 Index Value")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # ---------------- SENSEX CHART ---------------- #
+
+    plt.figure(figsize=(14, 6))
+
+    plt.plot(
+        sensex_data.index,
+        sensex_data["Close"],
+        color="orange",
+        linewidth=2,
+        label="SENSEX Closing Value"
+    )
+
+    plt.scatter(
+        sensex_data.index[0],
+        sensex_first,
+        color="green",
+        s=80,
+        label="First Value"
+    )
+
+    plt.scatter(
+        sensex_data.index[-1],
+        sensex_latest,
+        color="red",
+        s=80,
+        label="Latest Value"
+    )
+
+    plt.title(
+        f"S&P BSE SENSEX Historical Market Line Chart ({period})",
+        fontsize=15,
+        fontweight="bold"
+    )
+
+    plt.xlabel("Date")
+    plt.ylabel("SENSEX Index Value")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # ---------------- COMBINED PERCENTAGE CHART ---------------- #
+    # This compares performance fairly because NIFTY and SENSEX
+    # use different index value scales.
+
+    nifty_normalized = (
+        nifty_data["Close"] / nifty_data["Close"].iloc[0]
+    ) * 100
+
+    sensex_normalized = (
+        sensex_data["Close"] / sensex_data["Close"].iloc[0]
+    ) * 100
+
+    plt.figure(figsize=(14, 6))
+
+    plt.plot(
+        nifty_data.index,
+        nifty_normalized,
+        color="blue",
+        linewidth=2,
+        label="NIFTY 50 Performance"
+    )
+
+    plt.plot(
+        sensex_data.index,
+        sensex_normalized,
+        color="orange",
+        linewidth=2,
+        label="SENSEX Performance"
+    )
+
+    plt.axhline(
+        y=100,
+        color="gray",
+        linestyle="--",
+        linewidth=1
+    )
+
+    plt.title(
+        f"NIFTY 50 vs SENSEX Percentage Performance ({period})",
+        fontsize=15,
+        fontweight="bold"
+    )
+
+    plt.xlabel("Date")
+    plt.ylabel("Performance Index (Starts at 100)")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+print("\nProject completed successfully.")
